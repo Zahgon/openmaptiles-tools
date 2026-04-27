@@ -17,26 +17,11 @@ def tag_fields_to_sql(fields):
     """Converts a list of fields stored in the tags hstore into a list of SQL fields:
         name:en   =>   NULLIF(tags->'name:en', '') AS name:en
     """
-    return [f"NULLIF(tags->'{fld}', '') AS \"{fld}\"" for fld in fields]
+    pass
 
 
 def assert_int(value, name: str, min_val: Optional[int] = None, max_val: Optional[int] = None, required=False):
-    if value is None:
-        if required:
-            raise ValueError(f'Value {name} does not exist')
-        return None
-    elif isinstance(value, str):
-        try:
-            value = int(value)
-        except ValueError:
-            raise ValueError(f'Unable to parse {name} value "{value}" as an integer')
-    elif not isinstance(value, int):
-        raise ValueError(f'The {name} value was expected to be an integer, but found {type(value).__name__} "{value}"')
-    if min_val is not None and value < min_val:
-        raise ValueError(f'The {name} value {value} is less than the minimum allowed {min_val}')
-    if max_val is not None and value > max_val:
-        raise ValueError(f'The {name} value {value} is more than the maximum allowed {max_val}')
-    return value
+    pass
 
 
 @dataclass
@@ -87,7 +72,7 @@ class Layer:
 
     @staticmethod
     def parse(layer_source: Union[str, Path, ParsedData]) -> 'Layer':
-        return Layer(layer_source)
+        pass
 
     def __init__(self,
                  layer_source: Union[str, Path, ParsedData],
@@ -178,44 +163,24 @@ class Layer:
     def _assemble_vars(self) -> Dict[str, str]:
         # Compute layer variables including the override logic.
         # Priority order (last wins):  layer, tileset global, tileset per layer, env vars
-        result = self.definition['layer'].get('vars', {})
-        if self.tileset:
-            for name, value in self.tileset.overrides.get('vars', {}).items():
-                if name in result:
-                    result[name] = value
-        for name, value in self.overrides.get('vars', {}).items():
-            if name not in result:
-                raise ValueError(f'Layer override variable "{name}" is not defined in the layer')
-            result[name] = value
-        for name in result.keys():
-            result[name] = self.getenv(f'OMT_VAR_{name}', result[name])
-        return result
+        pass
 
     def getenv(self, name: str, default: str = '') -> str:
         # Allow empty env var to be the same as unset.
-        value = self._getenv(name, '')
-        return value if value != '' else default
+        pass
 
     def get_fields(self) -> List[str]:
         """Get a list of field names this layer generates.
            Geometry field is not included."""
-        if self.definition['layer'].get('fields'):
-            layer_fields = list(self.definition['layer']['fields'].keys())
-        else:
-            layer_fields = []
-        if self.key_field:
-            layer_fields.append(self.key_field)
-        if self.tileset and self.has_localized_names:
-            layer_fields += self.tileset.languages_as_fields()
-        return layer_fields
+        pass
 
     @property
     def id(self) -> str:
-        return self.definition['layer']['id']
+        pass
 
     @property
     def description(self) -> str:
-        return self.definition['layer'].get('description', '').strip()
+        pass
 
     @property
     def buffer_size(self) -> int:
@@ -238,106 +203,54 @@ class Layer:
 
         Note that the layer yaml file must define either buffer_size or min_buffer_size or both.
         """
-        # Read layer yaml file
-        size = assert_int(self.definition['layer'].get('buffer_size'), 'buffer_size', min_val=0)
-        min_size = assert_int(self.definition['layer'].get('min_buffer_size'), 'min_buffer_size', min_val=0)
-        if size is None and min_size is None:
-            raise ValueError(f'Layer "{self.id}" is missing an integer buffer_size and/or min_buffer_size')
-        elif size is not None and min_size is not None:
-            if size < min_size:
-                raise ValueError(f'Layer "{self.id}" has buffer_size less than min_buffer_size')
-        elif size is None:
-            # size is not set, will use min_size as default (at the end)
-            size = 0
-        else:
-            # size is set, min_size is not set
-            min_size = 0
-        # Override with tileset global values
-        if self.tileset:
-            val = assert_int(self.tileset.overrides.get('buffer_size'), 'buffer_size global override', min_val=0)
-            if val is not None:
-                size = val
-        # Override with tileset per-layer values
-        if self.overrides:
-            val = assert_int(self.overrides.get('buffer_size'), 'buffer_size layer override', min_val=0)
-            min_val = assert_int(self.overrides.get('min_buffer_size'), 'min_buffer_size layer override', min_val=0)
-            if val is not None and min_val is not None and val < min_val:
-                raise ValueError(f'Layer overrides for "{self.id}" have buffer_size less than min_buffer_size')
-            if val is not None:
-                size = val
-            if min_val is not None:
-                min_size = min_val
-        # Override with ENV variables
-        tbs = self.getenv('TILE_BUFFER_SIZE')
-        val = assert_int(tbs if tbs != '' else None, 'TILE_BUFFER_SIZE env var', min_val=0)
-        if val is not None:
-            size = val
-        # Ensure buffer is no less than the minimum
-        if size < min_size:
-            size = min_size
-        return size
+        pass
 
     @property
     def max_size(self) -> int:
-        return self.definition.get('max_size', 512)
+        pass
 
     @property
     def srs(self) -> str:
-        res = self.definition['layer'].get(
-            'srs',
-            self.tileset.default_srs if self.tileset
-            else '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 '
-                 '+x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null '
-                 '+wktext +no_defs +over')
-        return res
+        pass
 
     @property
     def srid(self) -> str:
-        res = self.definition['layer']['datasource'].get(
-            'srid', self.tileset.default_srid if self.tileset else '900913')
-        return res
+        pass
 
     @property
     def geometry_field(self) -> str:
-        return self.definition['layer']['datasource'].get('geometry_field', 'geometry')
+        pass
 
     @property
     def key_field(self) -> Union[str, None]:
-        return self.definition['layer']['datasource'].get('key_field')
+        pass
 
     @property
     def key_field_as_attribute(self) -> bool:
-        val = self.definition['layer']['datasource'].get('key_field_as_attribute')
-        return bool(val and val != 'no')
+        pass
 
     @property
     def raw_query(self) -> str:
         """Query string as defined in the layer file"""
-        return self.definition['layer']['datasource']['query']
+        pass
 
     @property
     def has_localized_names(self) -> bool:
-        return '{name_languages}' in self.raw_query
+        pass
 
     @property
     def query(self) -> str:
         """Query string with resolved localized names.
         If parent tileset is missing, only uses automatic fields"""
-        if self.tileset:
-            fields = self.tileset.languages_as_sql_fields()
-        else:
-            fields = tag_fields_to_sql(Tileset.auto_language_fields)
-        return self.raw_query.format(name_languages=(', '.join(fields)))
+        pass
 
     def get_var(self, name: str) -> str:
-        if name not in self._vars:
-            raise ValueError(f'Variable {name} does not exist in layer {self.id}')
-        return str(self._vars[name])
+        pass
 
     @property
     @deprecated(version='5.4.0', reason='use requires_layers property instead')
     def requires(self) -> List[str]:
-        return self.requires_layers
+        pass
 
     def __str__(self) -> str:
         if self.tileset:
@@ -358,7 +271,7 @@ class Tileset:
 
     @staticmethod
     def parse(tileset_source: Union[str, Path, ParsedData]) -> 'Tileset':
-        return Tileset(tileset_source)
+        pass
 
     def __init__(self, tileset_source: Union[str, Path, ParsedData], getenv: GetEnv = None):
         """Create a new tileset from a file (str|Path), or already parsed.
@@ -411,136 +324,103 @@ class Tileset:
 
     @property
     def attribution(self) -> str:
-        return self.definition['attribution']
+        pass
 
     @property
     def bounds(self) -> list:
-        return self.definition['bounds']
+        pass
 
     @property
     def center(self) -> list:
-        return self.definition['center']
+        pass
 
     @property
     def defaults(self) -> dict:
-        return self.definition['defaults']
+        pass
 
     @property
     def default_srs(self) -> str:
-        return self.defaults['srs']
+        pass
 
     @property
     def default_srid(self) -> str:
-        return self.defaults['datasource']['srid']
+        pass
 
     @property
     def description(self) -> str:
-        return self.definition.get('description', '').strip()
+        pass
 
     @property
     def id(self) -> str:
-        return self.definition['id']
+        pass
 
     @property
     def languages(self) -> List[str]:
-        return self.definition.get('languages', [])
+        pass
 
     @property
     def layer_paths(self) -> List[Path]:
-        return [v.filename for v in self.layers]
+        pass
 
     @property
     def maxzoom(self) -> int:
-        return self.definition['maxzoom']
+        pass
 
     @property
     def minzoom(self) -> int:
-        return self.definition['minzoom']
+        pass
 
     @property
     def name(self) -> str:
-        return self.definition['name']
+        pass
 
     @property
     def overrides(self) -> dict:
-        return self.definition.get('overrides', {})
+        pass
 
     @property
     def pixel_scale(self) -> int:
-        return self.definition['pixel_scale']
+        pass
 
     @property
     def version(self) -> str:
-        return self.definition['version']
+        pass
 
     def languages_as_fields(self) -> List[str]:
         """
         Get languages as a list of SQL field names,
         decorated as 'name:code', as well as the default ones.
         """
-        return [f'name:{lang}'
-                for lang in self.languages] + Tileset.auto_language_fields
+        pass
 
     def languages_as_sql_fields(self) -> List[str]:
         """Get language codes as a list of SQL fields:
             en   =>   NULLIF(tags->'name:en', '') AS name:en
         """
-        return tag_fields_to_sql(self.languages_as_fields())
+        pass
 
     def __str__(self) -> str:
         return f'{self.name} ({self.filename})'
 
 
 def parse_file(file: Path) -> dict:
-    with file.open() as stream:
-        try:
-            return yaml.full_load(stream)
-        except yaml.YAMLError as e:
-            print_err(f'Could not parse {file}')
-            print_err(e)
-            sys.exit(1)
+    pass
 
 
 def validate_properties(obj, info):
     """Ensure that none of the object properties raise errors"""
-    with warnings.catch_warnings():
-        # Validation should test properties without warnings even if they are deprecated
-        warnings.filterwarnings('ignore', category=DeprecationWarning)
-        errors = []
-        for attr in dir(obj):
-            try:
-                getattr(obj, attr)
-            except Exception as ex:
-                errors.append((attr, ex))
-        if errors:
-            err = f'\n{info} has invalid data:\n'
-            err += '\n'.join((f'  * {n}: {repr(e)}' for n, e in errors))
-            err += '\n'
-            raise ValueError(err)
+    pass
 
 
 def process_layers(filename: Path, processor: Callable[[Layer, bool], None]):
     """
     Open a tileset or a layer yaml file, and execute callback for each layer.
     Second parameter indicates if this is part of a tileset or not."""
-    parsed = ParsedData(parse_file(filename), filename)
-    if 'tileset' in parsed.data:
-        for layer in Tileset.parse(parsed).layers:
-            processor(layer, True)
-    elif 'layer' in parsed.data:
-        processor(Layer.parse(parsed), False)
-    else:
-        raise ValueError(f'Unrecognized content in file {filename} '
-                         f'- expecting "tileset" or "layer" top element')
+    pass
 
 
 def get_requires_prop(requires: Dict[str, Union[str, List[str]]], prop: str, err: str) -> List[str]:
     """
     Extract and delete a property from a dictionary, and ensure that the property is a valid list of strings.
     """
-    result = requires.pop(prop, [])
-    if isinstance(result, str):
-        result = [result]
-    if not isinstance(result, list) or any(not isinstance(v, str) or v == '' for v in result):
-        raise ValueError(err)
-    return result
+    pass
